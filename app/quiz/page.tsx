@@ -1,208 +1,59 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { subscribeAllVocabularies } from '@/lib/vocabService';
-import type { Vocabulary } from '@/lib/vocabService';
+import Link from 'next/link';
 
-type QuizMode = 'word-to-meaning' | 'meaning-to-word';
-
-export default function QuizPage() {
-    const [allVocabs, setAllVocabs] = useState<Vocabulary[]>([]);
-    const [currentVocab, setCurrentVocab] = useState<Vocabulary | null>(null);
-    const [options, setOptions] = useState<string[]>([]);
-    const [selectedAnswer, setSelectedAnswer] = useState<string>('');
-    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-    const [score, setScore] = useState(0);
-    const [totalQuestions, setTotalQuestions] = useState(0);
-    const [quizMode, setQuizMode] = useState<QuizMode>('word-to-meaning');
-    const [gameState, setGameState] = useState<'idle' | 'playing' | 'result'>('idle');
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const unsubscribe = subscribeAllVocabularies((vocabs) => {
-            setAllVocabs(vocabs);
-            setIsLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    const startQuiz = () => {
-        if (allVocabs.length < 4) {
-            alert('You need at least 4 words to start the quiz!');
-            return;
-        }
-        setScore(0);
-        setTotalQuestions(0);
-        setGameState('playing');
-        generateQuestion();
-    };
-
-    const generateQuestion = () => {
-        setSelectedAnswer('');
-        setIsCorrect(null);
-
-        const randomIndex = Math.floor(Math.random() * allVocabs.length);
-        const vocab = allVocabs[randomIndex];
-        setCurrentVocab(vocab);
-
-        const correctAnswer = quizMode === 'word-to-meaning' ? vocab.meaning : vocab.word;
-        const wrongOptions: string[] = [];
-
-        while (wrongOptions.length < 3) {
-            const randomVocab = allVocabs[Math.floor(Math.random() * allVocabs.length)];
-            const option = quizMode === 'word-to-meaning' ? randomVocab.meaning : randomVocab.word;
-            if (option !== correctAnswer && !wrongOptions.includes(option)) {
-                wrongOptions.push(option);
-            }
-        }
-
-        setOptions([...wrongOptions, correctAnswer].sort(() => Math.random() - 0.5));
-    };
-
-    const handleAnswer = (answer: string) => {
-        if (selectedAnswer) return;
-        setSelectedAnswer(answer);
-        const correctAnswer = quizMode === 'word-to-meaning' ? currentVocab?.meaning : currentVocab?.word;
-        const correct = answer === correctAnswer;
-        setIsCorrect(correct);
-        setTotalQuestions(prev => prev + 1);
-        if (correct) setScore(prev => prev + 1);
-    };
-
+export default function QuizMenuPage() {
     return (
         <div className="min-h-screen pb-20 pt-12">
             <div className="max-w-3xl mx-auto px-6">
-
-                <header className="mb-10 text-center reveal">
-                    <h1 className="text-[34px] font-bold text-[var(--text-main)] mb-2 tracking-tight">
-                        Practice
+                <div className="text-center mb-12 reveal">
+                    <h1 className="text-[40px] font-bold text-[var(--text-main)] mb-4 leading-tight">
+                        Practice Mode
                     </h1>
-                    <p className="text-[var(--text-secondary)] text-[17px]">
-                        Test your memory.
+                    <p className="text-[var(--text-secondary)] text-lg">
+                        Select a game type to start reviewing
                     </p>
-                </header>
+                </div>
 
-                {gameState === 'idle' ? (
-                    <div className="premium-card p-10 text-center reveal delay-100 max-w-lg mx-auto">
-                        <div className="w-20 h-20 bg-[var(--bg-sub)] rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-sm">
-                            <svg className="w-10 h-10 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                <div className="grid gap-4 md:grid-cols-2 reveal delay-100">
+
+                    {/* Flashcards */}
+                    <Link href="/quiz/flashcard" className="group premium-card p-6 flex flex-col items-center text-center hover:border-[var(--primary)] transition-all">
+                        <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                         </div>
-                        <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-3">Choose Mode</h2>
-                        <p className="text-[var(--text-secondary)] mb-8">
-                            How do you want to quiz yourself?
-                        </p>
+                        <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">Flashcards</h3>
+                        <p className="text-sm text-[var(--text-secondary)]">Review words and meanings with flip cards.</p>
+                    </Link>
 
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => { setQuizMode('word-to-meaning'); startQuiz(); }}
-                                disabled={allVocabs.length < 4}
-                                className="btn-modern btn-pink w-full h-[50px] text-[17px] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Word → Meaning
-                            </button>
-                            <button
-                                onClick={() => { setQuizMode('meaning-to-word'); startQuiz(); }}
-                                disabled={allVocabs.length < 4}
-                                className="btn-modern btn-outline w-full h-[50px] text-[17px] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--bg-sub)]"
-                            >
-                                Meaning → Word
-                            </button>
+                    {/* Spelling */}
+                    <Link href="/quiz/spelling" className="group premium-card p-6 flex flex-col items-center text-center hover:border-[var(--primary)] transition-all">
+                        <div className="w-16 h-16 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         </div>
+                        <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">Spelling</h3>
+                        <p className="text-sm text-[var(--text-secondary)]">Type the word correctly from its meaning.</p>
+                    </Link>
 
-                        {allVocabs.length < 4 && !isLoading && (
-                            <p className="mt-6 text-sm text-[var(--primary)] font-medium">
-                                * Need {4 - allVocabs.length} more words to start
-                            </p>
-                        )}
-                    </div>
-                ) : (
-                    <div className="reveal">
-                        {/* Stats bar */}
-                        <div className="premium-card p-4 flex items-center justify-between mb-8 shadow-sm bg-[var(--bg-main)]/50 backdrop-blur-md sticky top-[70px] z-30">
-                            <div className="flex items-center gap-6 px-2">
-                                <div>
-                                    <p className="text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Score</p>
-                                    <p className="text-xl font-bold text-[var(--text-main)]">{score}/{totalQuestions}</p>
-                                </div>
-                                <div className="w-px h-8 bg-[var(--border-light)]"></div>
-                                <div>
-                                    <p className="text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Accuracy</p>
-                                    <p className="text-xl font-bold text-[var(--primary)]">
-                                        {totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0}%
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setGameState('idle')}
-                                className="px-4 py-2 text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-main)] bg-[var(--bg-sub)] hover:bg-[#ebebeb] rounded-lg transition-all"
-                            >
-                                STOP
-                            </button>
+                    {/* Word to Meaning */}
+                    <Link href="/quiz/word-meaning" className="group premium-card p-6 flex flex-col items-center text-center hover:border-[var(--primary)] transition-all">
+                        <div className="w-16 h-16 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </div>
+                        <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">Word → Meaning</h3>
+                        <p className="text-sm text-[var(--text-secondary)]">Choose the correct meaning for the given word.</p>
+                    </Link>
 
-                        {/* Question Card */}
-                        <div className="premium-card py-20 px-8 mb-8 text-center bg-[#1d1d1f] text-white shadow-xl relative overflow-hidden ring-4 ring-black/5">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--primary)] to-orange-500"></div>
-                            <p className="text-[11px] font-bold text-[rgba(255,255,255,0.4)] mb-3 uppercase tracking-[0.2em]">Question</p>
-                            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-                                {quizMode === 'word-to-meaning' ? currentVocab?.word : currentVocab?.meaning}
-                            </h2>
+                    {/* Meaning to Word */}
+                    <Link href="/quiz/meaning-word" className="group premium-card p-6 flex flex-col items-center text-center hover:border-[var(--primary)] transition-all">
+                        <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                         </div>
+                        <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">Meaning → Word</h3>
+                        <p className="text-sm text-[var(--text-secondary)]">Choose the correct word for the given meaning.</p>
+                    </Link>
 
-                        {/* Options */}
-                        <div className="grid gap-3 mb-10">
-                            {options.map((option, i) => {
-                                const isSelected = selectedAnswer === option;
-                                const isAnswerCorrect = (quizMode === 'word-to-meaning' ? currentVocab?.meaning : currentVocab?.word) === option;
-
-                                let cardStyle = "premium-card p-5 text-left transition-all duration-200 cursor-pointer border-2 ";
-                                if (!selectedAnswer) {
-                                    cardStyle += "border-transparent hover:border-[var(--primary)] hover:shadow-md active:scale-[0.98]";
-                                } else if (isAnswerCorrect) {
-                                    cardStyle += "bg-green-50/50 border-green-500 shadow-sm";
-                                } else if (isSelected && !isAnswerCorrect) {
-                                    cardStyle += "bg-red-50/50 border-red-500 opacity-60";
-                                } else {
-                                    cardStyle += "border-transparent opacity-40 cursor-not-allowed bg-[var(--bg-sub)]";
-                                }
-
-                                return (
-                                    <button
-                                        key={i}
-                                        onClick={() => handleAnswer(option)}
-                                        disabled={!!selectedAnswer}
-                                        className={cardStyle}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-8 h-8 rounded-[8px] flex items-center justify-center text-[13px] font-bold shrink-0 transition-colors ${isSelected
-                                                ? isAnswerCorrect
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-red-500 text-white'
-                                                : 'bg-[var(--bg-sub)] text-[var(--text-secondary)]'
-                                                }`}>
-                                                {String.fromCharCode(65 + i)}
-                                            </div>
-                                            <span className="text-[17px] font-medium text-[var(--text-main)] w-full">{option}</span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Next Button */}
-                        <div className={`flex justify-center transition-all duration-300 ${selectedAnswer ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-                            <button
-                                onClick={generateQuestion}
-                                className="btn-modern btn-pink px-10 py-3.5 text-[17px] shadow-lg hover:shadow-xl hover:scale-105"
-                            >
-                                Next Question
-                            </button>
-                        </div>
-
-                    </div>
-                )}
+                </div>
             </div>
         </div>
     );
