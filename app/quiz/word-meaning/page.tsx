@@ -23,7 +23,8 @@ export default function WordToMeaningPage() {
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [score, setScore] = useState(0);
     const [totalQuestions, setTotalQuestions] = useState(0);
-    const [gameState, setGameState] = useState<'idle' | 'playing'>('idle');
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [gameState, setGameState] = useState<'idle' | 'playing' | 'finished'>('idle');
     const [isLoading, setIsLoading] = useState(true);
 
     const availableYears = useMemo(() => {
@@ -57,17 +58,23 @@ export default function WordToMeaningPage() {
             alert(`You need at least 4 words in this filter to start! (Has ${filteredVocabs.length})`);
             return;
         }
-        setGameVocabs(filteredVocabs);
+        // Shuffle the vocabularies for random sequence without repeats
+        const shuffled = [...filteredVocabs].sort(() => Math.random() - 0.5);
+        setGameVocabs(shuffled);
         setScore(0);
         setTotalQuestions(0);
+        setCurrentIndex(0);
         setGameState('playing');
-        generateQuestion(filteredVocabs);
+        generateQuestion(shuffled, 0);
     };
 
-    const generateQuestion = (pool = gameVocabs) => {
-        if (pool.length === 0) return;
-        const randomIndex = Math.floor(Math.random() * pool.length);
-        const vocab = pool[randomIndex];
+    const generateQuestion = (pool = gameVocabs, index = currentIndex) => {
+        if (pool.length === 0 || index >= pool.length) {
+            setGameState('finished');
+            return;
+        }
+
+        const vocab = pool[index];
         setCurrentVocab(vocab);
         setSelectedAnswer('');
         setIsCorrect(null);
@@ -77,6 +84,7 @@ export default function WordToMeaningPage() {
         const wrongOptions: string[] = [];
         let attempts = 0;
 
+        // Pick wrong options from the same pool (or full list if needed, but pool works)
         while (wrongOptions.length < 3 && attempts < 50) {
             attempts++;
             const randomVocab = pool[Math.floor(Math.random() * pool.length)];
@@ -102,8 +110,11 @@ export default function WordToMeaningPage() {
         setTotalQuestions(prev => prev + 1);
         if (correct) setScore(prev => prev + 1);
 
+        // Advance to next question
         setTimeout(() => {
-            generateQuestion();
+            const nextIndex = currentIndex + 1;
+            setCurrentIndex(nextIndex);
+            generateQuestion(gameVocabs, nextIndex);
         }, correct ? 800 : 2500);
     };
 
@@ -162,6 +173,31 @@ export default function WordToMeaningPage() {
                         >
                             Start Game
                         </button>
+                    </div>
+                ) : gameState === 'finished' ? (
+                    <div className="premium-card p-10 text-center reveal delay-100 max-w-lg mx-auto">
+                        <div className="w-20 h-20 bg-green-50 text-green-500 rounded-[24px] flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <h2 className="text-[28px] font-bold text-[var(--text-main)] mb-2">Quiz Completed!</h2>
+                        <p className="text-[var(--text-secondary)] mb-8 text-lg">
+                            You scored <span className="text-[var(--primary)] font-bold">{score}</span> out of <span className="font-bold">{gameVocabs.length}</span>
+                        </p>
+
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={startGame}
+                                className="btn-modern btn-pink w-full h-[54px] text-[17px] shadow-lg"
+                            >
+                                Play Again
+                            </button>
+                            <button
+                                onClick={() => setGameState('idle')}
+                                className="btn-modern btn-outline w-full h-[54px] text-[17px] hover:bg-gray-50"
+                            >
+                                Back to Menu
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="reveal">
