@@ -9,10 +9,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Daily Vocab - จดคำศัพท์ประจำวัน",
-  description: "แอปพลิเคชันจดคำศัพท์ในชีวิตประจำวัน พร้อมระบบทายคำศัพท์และกรองตามวัน",
+  title: "MyEng",
+  description: "app for learning English daily",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/2.svg",
+    shortcut: "/2.svg",
+    apple: "/2.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Daily Vocab",
   },
 };
 
