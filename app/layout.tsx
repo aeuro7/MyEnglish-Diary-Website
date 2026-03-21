@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   description: "app for learning English daily",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/2.svg",
-    shortcut: "/2.svg",
-    apple: "/2.svg",
+    icon: "/myeng2.png",
+    shortcut: "/myeng2.png",
+    apple: "/myeng2.png",
   },
   appleWebApp: {
     capable: true,
