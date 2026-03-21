@@ -11,6 +11,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Daily Vocab - จดคำศัพท์ประจำวัน",
   description: "แอปพลิเคชันจดคำศัพท์ในชีวิตประจำวัน พร้อมระบบทายคำศัพท์และกรองตามวัน",
+  icons: {
+    icon: "/2.svg",
+  },
 };
 
 export default function RootLayout({
