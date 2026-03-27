@@ -5,7 +5,7 @@ import { subscribeAllVocabularies } from '@/lib/vocabService';
 import type { Vocabulary } from '@/lib/vocabService';
 
 type SortOption = 'newest' | 'oldest' | 'a-z' | 'z-a';
-type FilterMode = 'all' | 'month';
+type FilterMode = 'all' | 'month' | 'date';
 
 interface GroupedVocabs {
     [key: string]: Vocabulary[];
@@ -26,6 +26,7 @@ export default function ListPage() {
     // Month/Year Selection defaults to current
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Available Years for dropdown (from data)
     const availableYears = useMemo(() => {
@@ -57,6 +58,8 @@ export default function ListPage() {
                 const d = new Date(v.date);
                 return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
             });
+        } else if (filterMode === 'date') {
+            filtered = filtered.filter(v => v.date === selectedDate);
         }
 
         // 3. Sorting
@@ -93,7 +96,7 @@ export default function ListPage() {
             processedVocabs: groups,
             groupingType: isDateSort ? 'date' : 'letter'
         };
-    }, [allVocabs, searchTerm, sortBy, filterMode, selectedMonth, selectedYear]);
+    }, [allVocabs, searchTerm, sortBy, filterMode, selectedMonth, selectedYear, selectedDate]);
 
     // Helpers
     const formatDateHeader = (dateStr: string) => {
@@ -326,6 +329,31 @@ export default function ListPage() {
                                                 </select>
                                                 <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#86868b] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        onClick={() => setFilterMode('date')}
+                                        className={`p-4 rounded-[16px] border cursor-pointer transition-all ${filterMode === 'date'
+                                            ? 'border-[var(--primary)] bg-[rgba(250,45,72,0.03)] ring-1 ring-[var(--primary)]'
+                                            : 'border-[#e5e5e5] hover:border-[#d1d1d1] bg-white'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${filterMode === 'date' ? 'border-[var(--primary)] bg-[var(--primary)]' : 'border-[#d1d1d1]'
+                                                }`}>
+                                                {filterMode === 'date' && <div className="w-2 h-2 rounded-full bg-white" />}
+                                            </div>
+                                            <span className={`text-[15px] font-medium ${filterMode === 'date' ? 'text-[var(--primary)]' : 'text-[#1d1d1f]'}`}>
+                                                Specific Date
+                                            </span>
+                                        </div>
+                                        <div className={`pl-8 transition-opacity duration-200 ${filterMode === 'date' ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                                            <input
+                                                type="date"
+                                                value={selectedDate}
+                                                onChange={(e) => setSelectedDate(e.target.value)}
+                                                className="w-full h-10 px-3 rounded-lg bg-[#f5f5f7] text-[15px] font-medium text-[#1d1d1f] outline-none focus:ring-2 focus:ring-[var(--primary)]/20"
+                                            />
                                         </div>
                                     </div>
                                 </div>

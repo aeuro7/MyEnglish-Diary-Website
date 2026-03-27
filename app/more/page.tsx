@@ -137,17 +137,35 @@ export default function TranslatePage() {
                                         className="w-full h-[120px] p-5 bg-white border-2 border-[var(--border-light)] focus:border-[var(--primary)]/10 rounded-[20px] text-[20px] font-medium text-[var(--text-main)] placeholder:text-gray-300 focus:ring-0 transition-all outline-none resize-none shadow-sm"
                                         placeholder="Type to translate..."
                                     />
-                                    {inputText && (
+                                    <div className="absolute right-3 top-3 flex items-center gap-2">
                                         <button
                                             type="button"
-                                            onClick={() => { setInputText(''); setTranslatedText(''); setSuggestions([]); }}
-                                            className="absolute right-4 top-4 text-gray-400 hover:text-[var(--text-main)]"
+                                            onClick={async () => {
+                                                try {
+                                                    const text = await navigator.clipboard.readText();
+                                                    setInputText(text);
+                                                } catch (err) {
+                                                    console.error('Failed to read clipboard', err);
+                                                }
+                                            }}
+                                            className="text-gray-400 hover:text-[var(--primary)] transition-colors p-2 bg-white/90 hover:bg-gray-50 rounded-lg backdrop-blur-md shadow-sm border border-gray-100"
+                                            title="Paste contents"
                                         >
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                             </svg>
                                         </button>
-                                    )}
+                                        {inputText && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setInputText(''); setTranslatedText(''); setSuggestions([]); }}
+                                                className="text-gray-400 hover:text-red-500 transition-colors p-2 bg-white/90 hover:bg-gray-50 rounded-lg backdrop-blur-md shadow-sm border border-gray-100"
+                                                title="Clear"
+                                            >
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Suggestions / Did you mean */}
@@ -188,9 +206,28 @@ export default function TranslatePage() {
                                     <textarea
                                         value={translatedText}
                                         onChange={(e) => setTranslatedText(e.target.value)}
-                                        className="w-full h-[120px] p-5 bg-white border-2 border-[var(--border-light)] focus:border-[var(--primary)]/10 rounded-[20px] text-[20px] font-medium text-[var(--text-main)] placeholder:text-gray-300 focus:ring-0 transition-all outline-none resize-none shadow-sm"
+                                        className="w-full h-[120px] p-5 pr-14 bg-white border-2 border-[var(--border-light)] focus:border-[var(--primary)]/10 rounded-[20px] text-[20px] font-medium text-[var(--text-main)] placeholder:text-gray-300 focus:ring-0 transition-all outline-none resize-none shadow-sm"
                                         placeholder="Translation will appear here..."
                                     />
+                                    <div className="absolute right-3 top-3 flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                try {
+                                                    const text = await navigator.clipboard.readText();
+                                                    setTranslatedText(text);
+                                                } catch (err) {
+                                                    console.error('Failed to read clipboard', err);
+                                                }
+                                            }}
+                                            className="text-gray-400 hover:text-[var(--primary)] transition-colors p-2 bg-white/90 hover:bg-gray-50 rounded-lg backdrop-blur-md shadow-sm border border-gray-100"
+                                            title="Paste contents"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

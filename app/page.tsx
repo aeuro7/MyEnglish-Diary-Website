@@ -125,12 +125,32 @@ export default function Home() {
                   type="text"
                   value={word}
                   onChange={(e) => { setWord(e.target.value); if (e.target.value) setShowError(false); }}
-                  className={`w-full h-[60px] pl-6 pr-12 bg-white border-2 focus:border-[var(--primary)]/10 rounded-[20px] text-[17px] font-bold text-[var(--text-main)] placeholder:text-gray-300 placeholder:font-bold focus:ring-0 transition-all outline-none shadow-sm hover:shadow-md focus:shadow-lg ${showError && !word.trim() ? 'border-red-500 animate-pulse' : 'border-transparent'}`}
+                  className={`w-full h-[60px] pl-6 pr-20 bg-white border-2 focus:border-[var(--primary)]/10 rounded-[20px] text-[17px] font-bold text-[var(--text-main)] placeholder:text-gray-300 placeholder:font-bold focus:ring-0 transition-all outline-none shadow-sm hover:shadow-md focus:shadow-lg ${showError && !word.trim() ? 'border-red-500 animate-pulse' : 'border-transparent'}`}
                   placeholder="New Word"
                   autoComplete="off"
                 />
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300 group-focus-within:text-[var(--primary)] transition-colors duration-300">
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-gray-50 px-2 py-1 rounded-md group-focus-within:bg-[var(--primary)]/10">EN</span>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const text = await navigator.clipboard.readText();
+                        setWord(text);
+                        if (text) setShowError(false);
+                      } catch (err) {
+                        console.error('Failed to read clipboard', err);
+                      }
+                    }}
+                    className="text-gray-400 hover:text-[var(--primary)] hover:bg-gray-50 transition-colors p-2 rounded-lg"
+                    title="Paste contents"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </button>
+                  <div className="pointer-events-none text-gray-300 group-focus-within:text-[var(--primary)] transition-colors duration-300 ml-1">
+                    
+                  </div>
                 </div>
               </div>
 
@@ -140,12 +160,32 @@ export default function Home() {
                   type="text"
                   value={meaning}
                   onChange={(e) => { setMeaning(e.target.value); if (e.target.value) setShowError(false); }}
-                  className={`w-full h-[60px] pl-6 pr-12 bg-white border-2 focus:border-[var(--primary)]/10 rounded-[20px] text-[17px] font-medium text-[var(--text-main)] placeholder:text-gray-300 placeholder:font-bold focus:ring-0 transition-all outline-none shadow-sm hover:shadow-md focus:shadow-lg ${showError && !meaning.trim() ? 'border-red-500 animate-pulse' : 'border-transparent'}`}
+                  className={`w-full h-[60px] pl-6 pr-20 bg-white border-2 focus:border-[var(--primary)]/10 rounded-[20px] text-[17px] font-medium text-[var(--text-main)] placeholder:text-gray-300 placeholder:font-bold focus:ring-0 transition-all outline-none shadow-sm hover:shadow-md focus:shadow-lg ${showError && !meaning.trim() ? 'border-red-500 animate-pulse' : 'border-transparent'}`}
                   placeholder="Meaning"
                   autoComplete="off"
                 />
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300 group-focus-within:text-[var(--primary)] transition-colors duration-300">
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-gray-50 px-2 py-1 rounded-md group-focus-within:bg-[var(--primary)]/10">TH</span>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const text = await navigator.clipboard.readText();
+                        setMeaning(text);
+                        if (text) setShowError(false);
+                      } catch (err) {
+                        console.error('Failed to read clipboard', err);
+                      }
+                    }}
+                    className="text-gray-400 hover:text-[var(--primary)] hover:bg-gray-50 transition-colors p-2 rounded-lg"
+                    title="Paste contents"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </button>
+                  <div className="pointer-events-none text-gray-300 group-focus-within:text-[var(--primary)] transition-colors duration-300 ml-1">
+                    
+                  </div>
                 </div>
               </div>
 
