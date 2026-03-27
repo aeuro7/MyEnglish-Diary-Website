@@ -242,3 +242,20 @@ export const deleteVocabulary = async (id: string): Promise<void> => {
   }
 };
 
+import { updateDoc } from "firebase/firestore";
+
+// Update a vocabulary
+export const updateVocabulary = async (id: string, word: string, meaning: string, date: string): Promise<void> => {
+  try {
+    const docRef = doc(db, "vocabularies", id);
+    await updateDoc(docRef, {
+      word: word.trim(),
+      meaning: meaning.trim(),
+      date: date
+    });
+  } catch (error) {
+    console.error("Error updating vocabulary:", error);
+    throw error;
+  }
+};
+

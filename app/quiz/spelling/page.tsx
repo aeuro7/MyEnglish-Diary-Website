@@ -26,6 +26,7 @@ export default function SpellingGamePage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [gameState, setGameState] = useState<'idle' | 'playing' | 'finished'>('idle');
     const [isLoading, setIsLoading] = useState(true);
+    const [useHint, setUseHint] = useState(false);
 
     const availableYears = useMemo(() => {
         const years = new Set(allVocabs.map(v => new Date(v.date).getFullYear()));
@@ -78,6 +79,10 @@ export default function SpellingGamePage() {
         setCurrentVocab(vocab);
         setSelectedAnswer('');
         setIsCorrect(null);
+        setTimeout(() => {
+            const el = document.getElementById('spelling-input');
+            if (el) el.focus({ preventScroll: true });
+        }, 50);
     };
 
     const handleAnswer = (answer: string) => {
@@ -89,7 +94,16 @@ export default function SpellingGamePage() {
 
         setIsCorrect(correct);
         setTotalQuestions(prev => prev + 1);
-        if (correct) setScore(prev => prev + 1);
+        
+        if (correct) {
+            setScore(prev => prev + 1);
+            // Auto advance on correct answer after a short delay
+            setTimeout(() => {
+                const nextIndex = currentIndex + 1;
+                setCurrentIndex(nextIndex);
+                generateQuestion(gameVocabs, nextIndex);
+            }, 800);
+        }
     };
 
     // Explicit next function for spelling mode since it's manual
@@ -97,18 +111,36 @@ export default function SpellingGamePage() {
         const nextIndex = currentIndex + 1;
         setCurrentIndex(nextIndex);
         generateQuestion(gameVocabs, nextIndex);
+        
+        // Sync focus right inside the direct user-interaction handler for iOS
+        const el = document.getElementById('spelling-input');
+        if (el) el.focus({ preventScroll: true });
+    };
+
+    const getHintChars = (word: string | undefined) => {
+        if (!word) return [];
+        const chars = word.trim().split('');
+        return chars.map((char, index) => {
+            if (/[^a-zA-Z0-9]/.test(char)) return char; // spaces, hyphens, etc.
+            if (index === 0) return char; // first letter
+            if (chars.length > 4 && index === chars.length - 1) return char; // last letter
+            if (chars.length > 7 && index === Math.floor(chars.length / 2)) return char; // middle letter
+            return null;
+        });
     };
 
     return (
-        <div className="min-h-screen pb-20 pt-12">
-            <div className="max-w-3xl mx-auto px-6">
+        <div className="pb-4 md:pb-20 pt-2 md:pt-12">
+            <div className="max-w-3xl mx-auto px-4 md:px-6">
                 {/* Back Button */}
-                <div className="mb-6">
-                    <Link href="/quiz" className="inline-flex items-center text-[var(--text-secondary)] hover:text-[var(--primary)] text-sm font-semibold transition-colors">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                        Back to Menu
-                    </Link>
-                </div>
+                {gameState === 'idle' && (
+                    <div className="mb-4 md:mb-6">
+                        <Link href="/quiz" className="inline-flex items-center text-[var(--text-secondary)] hover:text-[var(--primary)] text-sm font-semibold transition-colors">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            Back to Menu
+                        </Link>
+                    </div>
+                )}
 
                 {gameState === 'idle' ? (
                     <div className="premium-card p-10 text-center reveal delay-100 max-w-lg mx-auto">
@@ -119,6 +151,23 @@ export default function SpellingGamePage() {
                         <p className="text-[var(--text-secondary)] mb-8">
                             Listen (or read) and type the correct word.
                         </p>
+
+                        {/* Hint Toggle */}
+                        <div className="mb-6 flex items-center justify-between p-4 rounded-[18px] bg-white border border-[var(--border-light)] shadow-sm transition-all hover:shadow-md">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-[12px] bg-blue-50 text-blue-500 flex items-center justify-center">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="font-bold text-[var(--text-main)] text-[15px]">Hangman Hint</h3>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">Show partial letter boxes</p>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" checked={useHint} onChange={() => setUseHint(!useHint)} />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]"></div>
+                            </label>
+                        </div>
 
                         {/* Filter Trigger Button */}
                         <div className="mb-8">
@@ -182,93 +231,139 @@ export default function SpellingGamePage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="reveal">
-                        {/* Stats bar */}
-                        <div className="premium-card p-4 flex items-center justify-between mb-8 shadow-sm bg-[var(--bg-main)]/50 backdrop-blur-md sticky top-[70px] z-30">
-                            <div className="flex items-center gap-6 px-2">
-                                <div>
-                                    <p className="text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Score</p>
-                                    <p className="text-xl font-bold text-[var(--text-main)]">{score} / {gameVocabs.length}</p>
-                                </div>
-                                <div className="w-px h-8 bg-[var(--border-light)]"></div>
-                                <div>
-                                    <p className="text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Accuracy</p>
-                                    <p className="text-xl font-bold text-[var(--primary)]">
-                                        {totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0}%
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setGameState('idle')}
-                                className="px-4 py-2 text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-main)] bg-[var(--bg-sub)] hover:bg-[#ebebeb] rounded-lg transition-all"
-                            >
-                                STOP
-                            </button>
-                        </div>
+                    <div className="reveal flex flex-col justify-start mt-2 md:mt-6">
 
                         {/* Question Card */}
-                        <div className="premium-card py-20 px-8 mb-8 text-center shadow-md relative overflow-hidden">
-                            <p className="text-[11px] font-bold text-[var(--text-tertiary)] mb-4 uppercase tracking-[0.2em]">Translate this</p>
-                            <h2 className="text-3xl md:text-5xl font-bold leading-tight text-[var(--primary)] drop-shadow-sm">
+                        <div id="quiz-container" className="premium-card pt-4 pb-8 px-4 md:pt-6 md:pb-12 md:px-8 mb-4 md:mb-8 text-center shadow-sm relative overflow-hidden">
+                            {/* Stats Header Inside Card */}
+                            <div className="flex items-start md:items-center justify-between mb-8 pb-4 border-b border-[var(--border-light)]">
+                                <div className="flex items-center gap-4 md:gap-6 text-left">
+                                    <div>
+                                        <p className="text-[10px] md:text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Score</p>
+                                        <p className="text-base md:text-xl font-bold text-[var(--text-main)] w-max">
+                                            {score} <span className="text-[13px] md:text-base text-[var(--text-secondary)]">/ {gameVocabs.length}</span>
+                                        </p>
+                                    </div>
+                                    <div className="w-px h-6 md:h-8 bg-[var(--border-light)]"></div>
+                                    <div>
+                                        <p className="text-[10px] md:text-[11px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">Accuracy</p>
+                                        <p className="text-base md:text-xl font-bold text-[var(--primary)] w-max">
+                                            {totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0}%
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setGameState('idle')}
+                                    className="px-3 py-1.5 md:px-4 md:py-2 text-[12px] md:text-[13px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
+                                >
+                                    STOP
+                                </button>
+                            </div>
+
+                            <p className="hidden md:block text-[11px] font-bold text-[var(--text-tertiary)] mb-4 uppercase tracking-[0.2em]">Translate this</p>
+                            <h2 className="text-2xl md:text-5xl font-bold leading-tight text-[var(--primary)] drop-shadow-sm">
                                 {currentVocab?.meaning}
                             </h2>
-                            <p className="text-[15px] text-[var(--text-secondary)] mt-4">
+                            <p className="hidden md:block text-[15px] text-[var(--text-secondary)] mt-4">
                                 Type the matching English word
                             </p>
+
+                            {/* Hangman hint */}
+                            {useHint && currentVocab?.word && isCorrect === null && (
+                                <div className="mt-4 md:mt-8 flex flex-wrap justify-center gap-1.5 md:gap-2">
+                                    {getHintChars(currentVocab.word).map((char, i) => {
+                                        if (char !== null && /[^a-zA-Z0-9]/.test(char)) {
+                                            const isTyped = selectedAnswer[i] && selectedAnswer[i] !== ' ';
+                                            return <div key={i} className={`w-2 md:w-6 h-10 md:h-12 flex items-center justify-center font-bold ${isTyped ? 'text-[var(--primary)]' : 'text-gray-400'}`}>{char}</div>
+                                        }
+                                        
+                                        const typedChar = selectedAnswer[i];
+                                        const displayChar = typedChar ? typedChar : char;
+                                        const isCorrectChar = typedChar && currentVocab.word[i] && typedChar.toLowerCase() === currentVocab.word[i].toLowerCase();
+                                        
+                                        return (
+                                            <div key={i} className={`w-8 h-10 md:w-12 md:h-12 rounded-[10px] md:rounded-[12px] flex items-center justify-center text-base md:text-xl font-bold border-[1.5px] md:border-2 transition-all duration-300 ${
+                                                typedChar 
+                                                    ? isCorrectChar 
+                                                        ? 'bg-emerald-50 border-emerald-300 text-emerald-600 scale-110 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                                                        : 'bg-rose-50 border-rose-300 text-rose-500 scale-110 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                                                    : char 
+                                                        ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                                                        : 'bg-[#f5f5f7] border-[#e5e5e5] text-transparent'
+                                            }`}>
+                                                {displayChar || '_'}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
 
-                        <div className="max-w-md mx-auto mb-10">
+                        <div className="max-w-md mx-auto mb-6 md:mb-10 w-full">
                             <form onSubmit={(e) => { e.preventDefault(); handleAnswer(selectedAnswer); }}>
                                 <div className="relative">
                                     <input
+                                        id="spelling-input"
                                         type="text"
                                         value={selectedAnswer}
                                         onChange={(e) => isCorrect === null && setSelectedAnswer(e.target.value)}
-                                        disabled={isCorrect !== null}
-                                        autoFocus
+                                        onFocus={() => {
+                                            // Delay to allow iOS/Android keyboard to fully animate up
+                                            setTimeout(() => {
+                                                const container = document.getElementById('quiz-container');
+                                                if (container) {
+                                                    const y = container.getBoundingClientRect().top + window.pageYOffset - 80;
+                                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                                }
+                                            }, 400);
+                                        }}
                                         placeholder="Type the word here..."
-                                        className={`modern-input w-full h-[60px] text-center text-xl font-bold rounded-[16px] shadow-sm transition-all duration-300 ${isCorrect === true ? 'bg-green-50 border-green-500 text-green-700' :
+                                        className={`modern-input w-full h-[50px] md:h-[60px] text-center text-lg md:text-xl font-bold rounded-[14px] md:rounded-[16px] shadow-sm transition-all duration-300 ${isCorrect === true ? 'bg-green-50 border-green-500 text-green-700' :
                                             isCorrect === false ? 'bg-red-50 border-red-500 text-red-700 shake' :
                                                 'focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--primary)]/10'
                                             }`}
                                     />
                                     {isCorrect !== null && (
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2">
                                             {isCorrect ? (
-                                                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                                <svg className="w-5 h-5 md:w-8 md:h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                                             ) : (
-                                                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                <svg className="w-5 h-5 md:w-8 md:h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                                             )}
                                         </div>
                                     )}
                                 </div>
 
                                 {isCorrect === false && (
-                                    <div className="mt-4 text-center animate-in fade-in slide-in-from-top-2">
-                                        <p className="text-[var(--text-secondary)] text-sm mb-1">Correct spelling:</p>
-                                        <p className="text-xl font-bold text-green-600 tracking-wide">{currentVocab?.word}</p>
+                                    <div className="mt-3 md:mt-4 text-center animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-[var(--text-secondary)] text-[11px] md:text-sm mb-0.5 md:mb-1">Correct spelling:</p>
+                                        <p className="text-lg md:text-xl font-bold text-green-600 tracking-wide">{currentVocab?.word}</p>
                                     </div>
                                 )}
 
-                                {!isCorrect && isCorrect !== false && (
+                                {!isCorrect && isCorrect !== false ? (
                                     <button
                                         type="submit"
                                         disabled={!selectedAnswer.trim()}
-                                        className="btn-modern btn-pink w-full mt-6 h-[54px] text-[17px] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="btn-modern btn-pink w-full mt-3 md:mt-6 h-[48px] md:h-[54px] text-[15px] md:text-[17px] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Check Answer
                                     </button>
-                                )}
-
-                                {/* Next Button for Spelling Mode */}
-                                {isCorrect !== null && (
+                                ) : (
                                     <button
                                         type="button"
-                                        onClick={nextQuestion}
-                                        autoFocus
-                                        className="btn-modern btn-pink w-full mt-6 h-[54px] text-[17px] shadow-lg hover:shadow-xl hover:scale-105 animate-in fade-in slide-in-from-bottom-2"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            nextQuestion();
+                                        }}
+                                        disabled={isCorrect === true}
+                                        className={`btn-modern w-full mt-3 md:mt-6 h-[48px] md:h-[54px] text-[15px] md:text-[17px] shadow-lg animate-in fade-in slide-in-from-bottom-2 ${
+                                            isCorrect === true 
+                                                ? 'bg-emerald-500 text-white shadow-emerald-500/20 opacity-90 cursor-default' 
+                                                : 'btn-pink hover:shadow-xl hover:scale-105'
+                                        }`}
                                     >
-                                        Next Question
+                                        {isCorrect === true ? "Correct! Next..." : "Next Question"}
                                     </button>
                                 )}
                             </form>
